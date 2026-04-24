@@ -1,0 +1,136 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Peserta;
+use App\Imports\PesertaImport;
+use App\Exports\PesertaExport;
+use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+
+class PesertaController extends Controller
+{
+    public function index (Request $request)
+    {
+        $search = $request->search;
+
+        $pesertas = Peserta::query()
+            ->when($search, function ($query) use ($search) {
+                $query->where('nama', 'like', "%{$search}%")
+                ->orWhere('kode_pendaftar', 'like', "%{$search}%");
+            })
+            ->orderBy('nama')
+            ->paginate(10);
+
+            return view('peserta.index', compact('pesertas', 'search'));
+    }
+
+    public function import(Request $request)
+    {
+    $request->validate([
+        'file' => 'required|mimes:xlsx,xls,csv',
+    ]);
+
+    Excel::import(new PesertaImport, $request->file('file'));
+
+    return redirect()->route('peserta.index')
+        ->with('success', 'Data peserta berhasil diupload.');
+    }
+
+    public function absen(Request $request, $id)
+    {
+    $peserta = Peserta::findOrFail($id);
+
+    $request->validate([
+        'status' => 'required|in:hadir,tidak_hadir',
+    ]);
+
+    $peserta->update([
+        'status_absen' => $request->status,
+        'waktu_absen' => now(),
+    ]);
+
+    if ($request->ajax()) {
+        return response()->json([
+            'success' => true,
+            'message' => 'Status absensi berhasil disimpan',
+            'status' => $peserta->status_absen,
+        ]);
+    }
+
+    return back()->with('success', 'Status absensi berhasil disimpan');
+    }
+
+    public function laporan(Request $request)
+    {
+    $baseQuery = Peserta::query();
+
+    if ($request->tanggal_ujian) {
+        $baseQuery->where('tanggal_ujian', $request->tanggal_ujian);
+    }
+
+    if ($request->jurusan) {
+        $baseQuery->where('jurusan', $request->jurusan);
+    }
+
+    if ($request->kelompok) {
+        $baseQuery->where('kelompok', $request->kelompok);
+    }
+
+    // Hitung summary card TANPA filter status_absen
+    $totalHadir = (clone $baseQuery)->where('status_absen', 'hadir')->count();
+    $totalTidakHadir = (clone $baseQuery)->where('status_absen', 'tidak_hadir')->count();
+    $totalBelumAbsen = (clone $baseQuery)->whereNull('status_absen')->count();
+
+    // Query tabel: baru ditambah filter status_absen
+    $tableQuery = clone $baseQuery;
+
+    if ($request->status_absen == 'belum') {
+        $tableQuery->whereNull('status_absen');
+    } elseif ($request->status_absen) {
+        $tableQuery->where('status_absen', $request->status_absen);
+    }
+
+    #$pesertas = $tableQuery->orderBy('nama')->paginate(10)->withQueryString();
+    $pesertas = $tableQuery
+    ->orderBy('nama')
+    ->paginate(10)
+    ->withQueryString();
+
+    $jurusans = Peserta::select('jurusan')->distinct()->whereNotNull('jurusan')->pluck('jurusan');
+    $kelompoks = Peserta::select('kelompok')->distinct()->whereNotNull('kelompok')->pluck('kelompok');
+
+    return view('peserta.laporan', compact(
+        'pesertas',
+        'totalHadir',
+        'totalTidakHadir',
+        'totalBelumAbsen',
+        'jurusans',
+        'kelompoks'
+    ));
+    }
+
+    public function export(Request $request)
+    {
+    return Excel::download(new PesertaExport($request), 'laporan-absensi-catar.xlsx');
+    }
+
+    public function reset(Request $request, $id)
+    {
+    $peserta = Peserta::findOrFail($id);
+
+    $peserta->update([
+        'status_absen' => null,
+        'waktu_absen' => null,
+    ]);
+
+    if ($request->ajax()) {
+        return response()->json([
+            'success' => true,
+            'message' => 'Absensi berhasil direset'
+        ]);
+    }
+
+    return back()->with('success', 'Absensi berhasil direset');
+    }
+}
