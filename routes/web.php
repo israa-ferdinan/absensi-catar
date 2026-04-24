@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\PesertaController;
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'prevent-back-history'])->group(function () {
 
     Route::get('/', [PesertaController::class, 'index'])->name('peserta.index');
 
