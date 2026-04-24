@@ -22,6 +22,10 @@
                 Laporan
             </a>
 
+            <a href="{{ route('peserta.kiosk') }}" class="btn btn-sm {{ request()->routeIs('peserta.kiosk') ? 'btn-primary' : 'btn-outline-primary' }}">
+                Kiosk
+            </a>
+
             <form method="POST" action="{{ route('logout') }}" class="m-0">
                 @csrf
                 <button class="btn btn-danger btn-sm">

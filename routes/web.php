@@ -32,6 +32,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/laporan/export', [PesertaController::class, 'export'])->name('peserta.export');
 
+    Route::get('/kiosk', [PesertaController::class, 'kiosk'])->name('peserta.kiosk');
+
+    Route::get('/kiosk/search', [PesertaController::class, 'kioskSearch'])->name('peserta.kiosk.search');
+
 });
 
 require __DIR__.'/auth.php';

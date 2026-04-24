@@ -133,4 +133,39 @@ class PesertaController extends Controller
 
     return back()->with('success', 'Absensi berhasil direset');
     }
+
+    public function kiosk()
+    {
+    return view('peserta.kiosk');
+    }
+
+    public function kioskSearch(Request $request)
+    {
+        $search = $request->search;
+        $tanggalUjian = $request->tanggal_ujian;
+
+        $pesertas = Peserta::query()
+            ->when($tanggalUjian, function ($query) use ($tanggalUjian) {
+                $query->where('tanggal_ujian', $tanggalUjian);
+            })
+            ->where(function ($query) use ($search) {
+                $query->where('kode_pendaftar', 'like', "%{$search}%")
+                    ->orWhere('nama', 'like', "%{$search}%");
+            })
+            ->orderByRaw("CASE WHEN kode_pendaftar = ? THEN 0 ELSE 1 END", [$search])
+            ->orderBy('nama')
+            ->limit(10)
+            ->get();
+
+        if ($pesertas->isEmpty()) {
+            return response()->json([
+                'found' => false
+            ]);
+        }
+
+        return response()->json([
+            'found' => true,
+            'pesertas' => $pesertas
+        ]);
+    }   
 }
