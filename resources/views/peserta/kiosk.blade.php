@@ -3,6 +3,26 @@
 @section('content')
 
 <style>
+    .kiosk-hero {
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        color: white;
+        border-radius: 20px;
+        padding: 28px;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, .12);
+    }
+
+    .kiosk-input-card {
+        border: 0;
+        border-radius: 18px;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, .06);
+    }
+
+    .kiosk-search {
+        height: 64px;
+        font-size: 22px;
+        font-weight: 700;
+    }
+
     .peserta-hadir {
         background-color: #e8f7ee !important;
         border-left: 6px solid #198754 !important;
@@ -16,6 +36,13 @@
     .peserta-belum {
         background-color: #ffffff !important;
         border-left: 6px solid #adb5bd !important;
+    }
+
+    .btn-kiosk-action {
+        min-width: 180px;
+        height: 56px;
+        font-size: 18px;
+        font-weight: 800;
     }
 </style>
 
@@ -70,7 +97,7 @@
             <div class="card-body p-4">
                 <input type="text"
                        id="kioskSearch"
-                       class="form-control form-control-lg text-center"
+                       class="form-control form-control-lg text-center kiosk-search"
                        placeholder="Ketik kode pendaftar atau nama peserta..."
                        autocomplete="off">
             </div>
@@ -192,10 +219,10 @@ document.addEventListener('click', function(e) {
     let cardClass = 'peserta-belum';
 
     let actionButtons = `
-        <button class="btn btn-success btn-lg px-5 btn-kiosk-absen" data-id="${peserta.id}" data-status="hadir">
+        <button class="btn btn-success btn-kiosk-action btn-lg px-5 btn-kiosk-absen" data-id="${peserta.id}" data-status="hadir">
             Hadir
         </button>
-        <button class="btn btn-danger btn-lg px-5 btn-kiosk-absen" data-id="${peserta.id}" data-status="tidak_hadir">
+        <button class="btn btn-danger  btn-kiosk-action btn-lg px-5 btn-kiosk-absen" data-id="${peserta.id}" data-status="tidak_hadir">
             Tidak Hadir
         </button>
     `;
@@ -209,7 +236,7 @@ document.addEventListener('click', function(e) {
             actionButtons = '<button class="btn btn-secondary btn-lg" disabled>Sudah Pulang</button>';
         } else {
             actionButtons = `
-                <button class="btn btn-warning btn-lg px-5 btn-kiosk-pulang" data-id="${peserta.id}">
+                <button class="btn btn-warning btn-lg px-5 btn-kiosk-action btn-kiosk-pulang" data-id="${peserta.id}">
                     Pulang
                 </button>
             `;

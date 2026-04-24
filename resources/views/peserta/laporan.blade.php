@@ -1,27 +1,33 @@
 @extends('layouts.app')
 
 @section('content')
-        <h3>Laporan Absensi Catar</h3>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="page-title mb-1">Laporan Absensi Catar</h3>
+            <div class="text-muted">Pantau rekap hadir, tidak hadir, belum absen, dan waktu pulang peserta.</div>
+        </div>
     </div>
     <div class="row mb-3">
-        <div class="col-md-4">
-            <div class="card text-bg-success">
+        <div class="col-md-4 mb-2">
+            <div class="card summary-card text-bg-success">
                 <div class="card-body">
                     <h6>Total Hadir</h6>
                     <h3>{{ $totalHadir }}</h3>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card text-bg-danger">
+
+        <div class="col-md-4 mb-2">
+            <div class="card summary-card text-bg-danger">
                 <div class="card-body">
                     <h6>Total Tidak Hadir</h6>
                     <h3>{{ $totalTidakHadir }}</h3>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card text-bg-secondary">
+
+        <div class="col-md-4 mb-2">
+            <div class="card summary-card text-bg-secondary">
                 <div class="card-body">
                     <h6>Belum Absen</h6>
                     <h3>{{ $totalBelumAbsen }}</h3>
@@ -29,7 +35,7 @@
             </div>
         </div>
     </div>
-    <div class="card mb-3">
+    <div class="card page-card mb-3">
         <div class="card-body">
             <form method="GET" action="{{ route('peserta.laporan') }}" class="row g-2">
                 <div class="col-md-3">
@@ -73,9 +79,9 @@
         </div>
     </div>
 
-    <div class="card">
+    <div class="card page-card">
         <div class="card-body table-responsive">
-            <table class="table table-bordered table-striped align-middle">
+            <table class="table table-bordered table-striped table-hover align-middle mb-0">
                 <thead>
                     <tr>
                         <th>No</th>

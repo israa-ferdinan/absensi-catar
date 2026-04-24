@@ -1,53 +1,113 @@
-<x-guest-layout>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Absensi Catar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <form method="POST" action="{{ route('login') }}">
-        @csrf
+    <style>
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-        <!-- Email Address -->
-       <!--  <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div> -->
+        .login-card {
+            width: 100%;
+            max-width: 430px;
+            border: 0;
+            border-radius: 22px;
+            box-shadow: 0 20px 45px rgba(0,0,0,.25);
+            overflow: hidden;
+        }
 
-        <div>
-            <x-input-label for="username" value="Username" />
-            <x-text-input id="username" class="block mt-1 w-full" type="text" name="username" required autofocus />
-            <x-input-error :messages="$errors->get('username')" class="mt-2" />
-        </div>
+        .login-header {
+            background: #d4af37;
+            color: #0f172a;
+            padding: 24px;
+            text-align: center;
+        }
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
+        .login-header h3 {
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
 
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
+        .login-body {
+            padding: 28px;
+            background: #ffffff;
+        }
 
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
+        .form-control {
+            border-radius: 12px;
+            padding: 12px;
+        }
 
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ml-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
-            </label>
-        </div>
+        .btn-login {
+            background: #0f172a;
+            color: #ffffff;
+            border-radius: 12px;
+            padding: 12px;
+            font-weight: 700;
+        }
 
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
+        .btn-login:hover {
+            background: #1e293b;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
 
-            <x-primary-button class="ml-3">
-                {{ __('Log in') }}
-            </x-primary-button>
-        </div>
-    </form>
-</x-guest-layout>
+<div class="card login-card">
+    <div class="login-header">
+        <h3>Absensi Catar</h3>
+        <div>Sistem Absensi Peserta Catar</div>
+    </div>
+
+    <div class="login-body">
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                Username atau password salah.
+            </div>
+        @endif
+
+        <form method="POST" action="{{ route('login') }}">
+            @csrf
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Username</label>
+                <input type="text"
+                       name="username"
+                       class="form-control"
+                       value="{{ old('username') }}"
+                       required
+                       autofocus>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Password</label>
+                <input type="password"
+                       name="password"
+                       class="form-control"
+                       required>
+            </div>
+
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="remember" id="remember">
+                <label class="form-check-label" for="remember">
+                    Ingat saya
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-login w-100">
+                Login
+            </button>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>

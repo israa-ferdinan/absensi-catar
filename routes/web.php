@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -24,7 +26,7 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
             return redirect()->route('peserta.kiosk');
         }
 
-        return redirect()->route('peserta.index');
+        return redirect()->route('dashboard.index');
     });
 
     Route::get('/kiosk/summary', [PesertaController::class, 'kioskSummary'])->name('peserta.kiosk.summary');
@@ -42,6 +44,9 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         Route::get('/laporan/export', [PesertaController::class, 'export'])->name('peserta.export');
 
         Route::resource('/users', UserController::class)->except(['show']);
+        Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
     });
 });
 

@@ -1,16 +1,15 @@
 @extends('layouts.app')
 
 @section('content')
-    <h3 class="mb-0">Data Peserta Catar</h3>
-    {{-- NOTIF --}}
-    @if (session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="page-title mb-1">Data Peserta Catar</h3>
+            <div class="text-muted">Kelola data peserta, upload Excel, dan proses absensi.</div>
         </div>
-    @endif
+    </div>
 
     {{-- UPLOAD --}}
-    <div class="card mb-3">
+    <div class="card page-card mb-3">
         <div class="card-body">
             <form action="{{ route('peserta.import') }}" method="POST" enctype="multipart/form-data">
                 @csrf
@@ -30,16 +29,18 @@
     </div>
 
     {{-- SEARCH --}}
-    <div class="mb-3">
-    <input type="text" id="searchInput" class="form-control"
-           placeholder="Cari nama atau kode pendaftar..."
-           value="{{ $search }}">
+    <div class="card page-card mb-3">
+        <div class="card-body">
+            <input type="text" id="searchInput" class="form-control form-control-lg"
+                placeholder="Cari nama atau kode pendaftar..."
+                value="{{ $search }}">
+        </div>
     </div>
 
     {{-- TABLE --}}
-    <div class="card" id="tableContainer">
+    <div class="card page-card" id="tableContainer">
         <div class="card-body table-responsive">
-            <table class="table table-bordered table-striped align-middle">
+            <table class="table table-bordered table-striped table-hover align-middle mb-0">
                 <thead>
                     <tr>
                         <th>No</th>

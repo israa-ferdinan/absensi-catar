@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Peserta;
+use App\Models\ActivityLog;
 use App\Imports\PesertaImport;
 use App\Exports\PesertaExport;
 use Illuminate\Http\Request;
@@ -45,9 +46,20 @@ class PesertaController extends Controller
         'status' => 'required|in:hadir,tidak_hadir',
     ]);
 
+    $statusLama = $peserta->status_absen;
+
     $peserta->update([
         'status_absen' => $request->status,
         'waktu_absen' => now(),
+    ]);
+
+    ActivityLog::create([
+        'user_id' => auth()->id(),
+        'peserta_id' => $peserta->id,
+        'aksi' => 'absen_masuk',
+        'keterangan' => 'Update status absen masuk',
+        'status_lama' => $statusLama,
+        'status_baru' => $peserta->status_absen,
     ]);
 
     if ($request->ajax()) {
@@ -119,11 +131,22 @@ class PesertaController extends Controller
     {
     $peserta = Peserta::findOrFail($id);
 
+    $statusLama = $peserta->status_absen . ' / ' . $peserta->status_pulang;
+
     $peserta->update([
         'status_absen' => null,
         'waktu_absen' => null,
         'status_pulang' => null,
         'waktu_pulang' => null,
+    ]);
+
+    ActivityLog::create([
+        'user_id' => auth()->id(),
+        'peserta_id' => $peserta->id,
+        'aksi' => 'reset_absensi',
+        'keterangan' => 'Reset absen masuk dan pulang',
+        'status_lama' => $statusLama,
+        'status_baru' => null,
     ]);
 
     if ($request->ajax()) {
@@ -207,9 +230,20 @@ class PesertaController extends Controller
             ], 422);
         }
 
+        $statusLama = $peserta->status_pulang;
+
         $peserta->update([
             'status_pulang' => 'pulang',
             'waktu_pulang' => now(),
+        ]);
+
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'peserta_id' => $peserta->id,
+            'aksi' => 'absen_pulang',
+            'keterangan' => 'Update status absen pulang',
+            'status_lama' => $statusLama,
+            'status_baru' => $peserta->status_pulang,
         ]);
 
         return response()->json([
