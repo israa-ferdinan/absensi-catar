@@ -15,6 +15,11 @@
 
         <div class="d-flex align-items-center gap-2">
             @if(auth()->user()->role === 'admin')
+
+                <a href="{{ route('users.index') }}" class="btn btn-sm {{ request()->routeIs('users.*') ? 'btn-primary' : 'btn-outline-primary' }}">
+                    User
+                </a>
+
                 <a href="{{ route('peserta.index') }}" class="btn btn-sm {{ request()->routeIs('peserta.index') ? 'btn-primary' : 'btn-outline-primary' }}">
                     Data Peserta
                 </a>

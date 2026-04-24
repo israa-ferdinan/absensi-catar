@@ -87,6 +87,7 @@
                         <th>Tanggal</th>
                         <th>Status</th>
                         <th>Waktu Absen</th>
+                        <th>Waktu Pulang</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -109,10 +110,11 @@
                                 @endif
                             </td>
                             <td>{{ $peserta->waktu_absen }}</td>
+                            <td>{{ $peserta->waktu_pulang ?? '-' }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center">Data tidak ditemukan.</td>
+                            <td colspan="10" class="text-center">Data tidak ditemukan.</td>
                         </tr>
                     @endforelse
                 </tbody>

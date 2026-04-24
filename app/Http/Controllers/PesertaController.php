@@ -122,6 +122,8 @@ class PesertaController extends Controller
     $peserta->update([
         'status_absen' => null,
         'waktu_absen' => null,
+        'status_pulang' => null,
+        'waktu_pulang' => null,
     ]);
 
     if ($request->ajax()) {
@@ -167,5 +169,53 @@ class PesertaController extends Controller
             'found' => true,
             'pesertas' => $pesertas
         ]);
-    }   
+    } 
+    
+    public function kioskSummary(Request $request)
+    {
+    $tanggalUjian = $request->tanggal_ujian;
+
+    $query = Peserta::query();
+
+    if ($tanggalUjian) {
+        $query->where('tanggal_ujian', $tanggalUjian);
+    }
+
+    return response()->json([
+        'hadir' => (clone $query)->where('status_absen', 'hadir')->count(),
+        'tidak_hadir' => (clone $query)->where('status_absen', 'tidak_hadir')->count(),
+        'belum_absen' => (clone $query)->whereNull('status_absen')->count(),
+        'total' => (clone $query)->count(),
+    ]);
+    }
+
+    public function pulang(Request $request, $id)
+    {
+        $peserta = Peserta::findOrFail($id);
+
+        if ($peserta->status_absen !== 'hadir') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Peserta belum absen hadir.'
+            ], 422);
+        }
+
+        if ($peserta->status_pulang === 'pulang') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Peserta sudah absen pulang.'
+            ], 422);
+        }
+
+        $peserta->update([
+            'status_pulang' => 'pulang',
+            'waktu_pulang' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Absen pulang berhasil disimpan',
+            'status_pulang' => $peserta->status_pulang,
+        ]);
+    }
 }

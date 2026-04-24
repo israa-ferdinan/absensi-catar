@@ -37,6 +37,35 @@
             </div>
         </div>
 
+        <div class="row mb-3" id="kioskSummary">
+            <div class="col-md-4 mb-2">
+                <div class="card text-bg-success shadow-sm">
+                    <div class="card-body text-center">
+                        <h6>Hadir</h6>
+                        <h3 id="summaryHadir">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-2">
+                <div class="card text-bg-danger shadow-sm">
+                    <div class="card-body text-center">
+                        <h6>Tidak Hadir</h6>
+                        <h3 id="summaryTidakHadir">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-2">
+                <div class="card text-bg-secondary shadow-sm">
+                    <div class="card-body text-center">
+                        <h6>Belum Absen</h6>
+                        <h3 id="summaryBelumAbsen">0</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="card shadow-sm mb-4">
             <div class="card-body p-4">
                 <input type="text"
@@ -58,6 +87,7 @@ const resultBox = document.getElementById('kioskResult');
 const tanggalInput = document.getElementById('kioskTanggal');
 
 searchInput.focus();
+loadKioskSummary();
 
 let timer = null;
 
@@ -94,6 +124,11 @@ searchInput.addEventListener('keyup', function () {
 
             pesertas.forEach(peserta => {
                 let statusBadge = '<span class="badge bg-secondary">Belum Absen</span>';
+                let pulangText = '';
+
+                if (peserta.status_pulang === 'pulang') {
+                    pulangText = ' | Pulang: Sudah';
+                }
                 let rowClass = 'peserta-belum';
 
                 if (peserta.status_absen === 'hadir') {
@@ -116,6 +151,7 @@ searchInput.addEventListener('keyup', function () {
                                     Jurusan: ${peserta.jurusan ?? '-'} |
                                     Kelompok: ${peserta.kelompok ?? '-'} |
                                     Tanggal: ${peserta.tanggal_ujian ?? '-'}
+                                    ${pulangText}
                                 </small>
                             </div>
                             <div>${statusBadge}</div>
@@ -152,7 +188,9 @@ document.addEventListener('click', function(e) {
     const peserta = JSON.parse(item.dataset.peserta);
 
     let statusBadge = '<span class="badge bg-secondary fs-6">Belum Absen</span>';
+    let pulangBadge = '<span class="badge bg-secondary fs-6">Belum Pulang</span>';
     let cardClass = 'peserta-belum';
+
     let actionButtons = `
         <button class="btn btn-success btn-lg px-5 btn-kiosk-absen" data-id="${peserta.id}" data-status="hadir">
             Hadir
@@ -165,11 +203,22 @@ document.addEventListener('click', function(e) {
     if (peserta.status_absen === 'hadir') {
         statusBadge = '<span class="badge bg-success fs-6">Hadir</span>';
         cardClass = 'peserta-hadir';
-        actionButtons = '<button class="btn btn-secondary btn-lg" disabled>Sudah Diabsen</button>';
+
+        if (peserta.status_pulang === 'pulang') {
+            pulangBadge = '<span class="badge bg-success fs-6">Sudah Pulang</span>';
+            actionButtons = '<button class="btn btn-secondary btn-lg" disabled>Sudah Pulang</button>';
+        } else {
+            actionButtons = `
+                <button class="btn btn-warning btn-lg px-5 btn-kiosk-pulang" data-id="${peserta.id}">
+                    Pulang
+                </button>
+            `;
+        }
     } else if (peserta.status_absen === 'tidak_hadir') {
         statusBadge = '<span class="badge bg-danger fs-6">Tidak Hadir</span>';
+        pulangBadge = '<span class="badge bg-secondary fs-6">Tidak Ada Absen Pulang</span>';
         cardClass = 'peserta-tidak-hadir';
-        actionButtons = '<button class="btn btn-secondary btn-lg" disabled>Sudah Diabsen</button>';
+        actionButtons = '<button class="btn btn-secondary btn-lg" disabled>Tidak Bisa Pulang</button>';
     }
 
     resultBox.innerHTML = `
@@ -183,7 +232,7 @@ document.addEventListener('click', function(e) {
                     <div class="col-md-6 mb-2"><strong>Jurusan:</strong> ${peserta.jurusan ?? '-'}</div>
                     <div class="col-md-6 mb-2"><strong>Kelompok:</strong> ${peserta.kelompok ?? '-'}</div>
                     <div class="col-md-6 mb-2"><strong>Tanggal Ujian:</strong> ${peserta.tanggal_ujian ?? '-'}</div>
-                    <div class="col-md-6 mb-2"><strong>Status:</strong> ${statusBadge}</div>
+                    <div class="col-md-6 mb-2"><strong>Status Pulang:</strong> ${statusBadge}</div>
                 </div>
 
                 <div class="d-flex justify-content-center gap-3">
@@ -244,6 +293,52 @@ document.addEventListener('click', function(e) {
 });
 
 document.addEventListener('click', function(e) {
+    if (!e.target.classList.contains('btn-kiosk-pulang')) return;
+
+    const button = e.target;
+    const id = button.dataset.id;
+
+    if (!confirm('Yakin simpan absen pulang peserta ini?')) return;
+
+    button.disabled = true;
+    button.innerText = 'Menyimpan...';
+
+    fetch(`/peserta/${id}/pulang`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) {
+            alert(data.message ?? 'Gagal menyimpan absen pulang.');
+            button.disabled = false;
+            button.innerText = 'Pulang';
+            return;
+        }
+
+        resultBox.innerHTML = `
+            <div class="alert alert-warning text-center fs-4">
+                ✔ Absen pulang berhasil disimpan
+            </div>
+        `;
+
+        searchInput.value = '';
+        searchInput.focus();
+
+        loadKioskSummary();
+    })
+    .catch(() => {
+        alert('Terjadi error saat menyimpan absen pulang.');
+        button.disabled = false;
+        button.innerText = 'Pulang';
+    });
+});
+
+document.addEventListener('click', function(e) {
     if (e.target.id !== 'btnBackToSearch') return;
 
     searchInput.dispatchEvent(new Event('keyup'));
@@ -253,7 +348,24 @@ tanggalInput.addEventListener('change', function () {
     resultBox.innerHTML = '';
     searchInput.value = '';
     searchInput.focus();
+    loadKioskSummary();
 });
+
+function loadKioskSummary() {
+    const tanggal = tanggalInput.value;
+
+    fetch(`/kiosk/summary?tanggal_ujian=${encodeURIComponent(tanggal)}`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById('summaryHadir').innerText = data.hadir;
+        document.getElementById('summaryTidakHadir').innerText = data.tidak_hadir;
+        document.getElementById('summaryBelumAbsen').innerText = data.belum_absen;
+    });
+    }
 </script>
 
 @endsection

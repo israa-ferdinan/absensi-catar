@@ -46,6 +46,7 @@ class PesertaExport implements FromCollection, WithHeadings
             'tanggal_ujian',
             'status_absen',
             'waktu_absen',
+            'waktu_pulang',
         ]);
     }
 
@@ -60,6 +61,7 @@ class PesertaExport implements FromCollection, WithHeadings
             'Tanggal Ujian',
             'Status Absen',
             'Waktu Absen',
+            'Waktu Pulang',
         ];
     }
 }

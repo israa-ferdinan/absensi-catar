@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -26,9 +27,11 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         return redirect()->route('peserta.index');
     });
 
+    Route::get('/kiosk/summary', [PesertaController::class, 'kioskSummary'])->name('peserta.kiosk.summary');
     Route::get('/kiosk', [PesertaController::class, 'kiosk'])->name('peserta.kiosk');
     Route::get('/kiosk/search', [PesertaController::class, 'kioskSearch'])->name('peserta.kiosk.search');
     Route::post('/peserta/{id}/absen', [PesertaController::class, 'absen'])->name('peserta.absen');
+    Route::post('/peserta/{id}/pulang', [PesertaController::class, 'pulang'])->name('peserta.pulang');
 
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/peserta', [PesertaController::class, 'index'])->name('peserta.index');
@@ -37,6 +40,8 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
 
         Route::get('/laporan', [PesertaController::class, 'laporan'])->name('peserta.laporan');
         Route::get('/laporan/export', [PesertaController::class, 'export'])->name('peserta.export');
+
+        Route::resource('/users', UserController::class)->except(['show']);
     });
 });
 
