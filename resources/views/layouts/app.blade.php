@@ -14,13 +14,15 @@
         </a>
 
         <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('peserta.index') }}" class="btn btn-sm {{ request()->routeIs('peserta.index') ? 'btn-primary' : 'btn-outline-primary' }}">
-                Data Peserta
-            </a>
+            @if(auth()->user()->role === 'admin')
+                <a href="{{ route('peserta.index') }}" class="btn btn-sm {{ request()->routeIs('peserta.index') ? 'btn-primary' : 'btn-outline-primary' }}">
+                    Data Peserta
+                </a>
 
-            <a href="{{ route('peserta.laporan') }}" class="btn btn-sm {{ request()->routeIs('peserta.laporan') ? 'btn-primary' : 'btn-outline-primary' }}">
-                Laporan
-            </a>
+                <a href="{{ route('peserta.laporan') }}" class="btn btn-sm {{ request()->routeIs('peserta.laporan') ? 'btn-primary' : 'btn-outline-primary' }}">
+                    Laporan
+                </a>
+            @endif
 
             <a href="{{ route('peserta.kiosk') }}" class="btn btn-sm {{ request()->routeIs('peserta.kiosk') ? 'btn-primary' : 'btn-outline-primary' }}">
                 Kiosk

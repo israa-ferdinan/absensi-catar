@@ -18,24 +18,26 @@ use App\Http\Controllers\PesertaController;
 
 Route::middleware(['auth', 'prevent-back-history'])->group(function () {
 
-    Route::get('/', [PesertaController::class, 'index'])->name('peserta.index');
+    Route::get('/', function () {
+        if (auth()->user()->role === 'operator') {
+            return redirect()->route('peserta.kiosk');
+        }
 
-    Route::get('/peserta', [PesertaController::class, 'index']);
-
-    Route::post('/peserta/import', [PesertaController::class, 'import'])->name('peserta.import');
-
-    Route::post('/peserta/{id}/absen', [PesertaController::class, 'absen'])->name('peserta.absen');
-
-    Route::post('/peserta/{id}/reset', [PesertaController::class, 'reset'])->name('peserta.reset');
-
-    Route::get('/laporan', [PesertaController::class, 'laporan'])->name('peserta.laporan');
-
-    Route::get('/laporan/export', [PesertaController::class, 'export'])->name('peserta.export');
+        return redirect()->route('peserta.index');
+    });
 
     Route::get('/kiosk', [PesertaController::class, 'kiosk'])->name('peserta.kiosk');
-
     Route::get('/kiosk/search', [PesertaController::class, 'kioskSearch'])->name('peserta.kiosk.search');
+    Route::post('/peserta/{id}/absen', [PesertaController::class, 'absen'])->name('peserta.absen');
 
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/peserta', [PesertaController::class, 'index'])->name('peserta.index');
+        Route::post('/peserta/import', [PesertaController::class, 'import'])->name('peserta.import');
+        Route::post('/peserta/{id}/reset', [PesertaController::class, 'reset'])->name('peserta.reset');
+
+        Route::get('/laporan', [PesertaController::class, 'laporan'])->name('peserta.laporan');
+        Route::get('/laporan/export', [PesertaController::class, 'export'])->name('peserta.export');
+    });
 });
 
 require __DIR__.'/auth.php';
