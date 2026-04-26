@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\BeritaAcaraController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -34,6 +35,11 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
     Route::get('/kiosk/search', [PesertaController::class, 'kioskSearch'])->name('peserta.kiosk.search');
     Route::post('/peserta/{id}/absen', [PesertaController::class, 'absen'])->name('peserta.absen');
     Route::post('/peserta/{id}/pulang', [PesertaController::class, 'pulang'])->name('peserta.pulang');
+    Route::get('/berita-acara', [BeritaAcaraController::class, 'form'])
+        ->name('berita-acara.form');
+
+    Route::post('/berita-acara/download', [BeritaAcaraController::class, 'download'])
+        ->name('berita-acara.download');
 
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/peserta', [PesertaController::class, 'index'])->name('peserta.index');

@@ -139,6 +139,11 @@
                     Laporan
                 </a>
 
+                <a href="{{ route('berita-acara.form') }}"
+                    class="btn nav-btn {{ request()->routeIs('berita-acara.*') ? 'nav-btn-active' : 'nav-btn-outline' }}">
+                    Berita Acara
+                </a>
+
                 <a href="{{ route('users.index') }}"
                    class="btn nav-btn {{ request()->routeIs('users.*') ? 'nav-btn-active' : 'nav-btn-outline' }}">
                     User
