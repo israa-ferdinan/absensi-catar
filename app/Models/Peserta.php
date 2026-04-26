@@ -18,5 +18,7 @@ class Peserta extends Model
         'waktu_absen',
         'status_pulang',
         'waktu_pulang',
+        'is_susulan',
+        'tanggal_absen_aktual',
     ];
 }

@@ -46,11 +46,22 @@ class PesertaController extends Controller
         'status' => 'required|in:hadir,tidak_hadir',
     ]);
 
+    $tanggalAktual = $request->tanggal_absen_aktual ?? now()->format('Y-m-d');
+    $tanggalServer = now()->format('Y-m-d');
+
+    $isSusulan = false;
+
+    if ($request->status === 'hadir' && $tanggalAktual !== $tanggalServer) {
+        $isSusulan = true;
+    }
+
     $statusLama = $peserta->status_absen;
 
     $peserta->update([
         'status_absen' => $request->status,
         'waktu_absen' => now(),
+        'tanggal_absen_aktual' => $tanggalAktual,
+        'is_susulan' => $isSusulan,
     ]);
 
     ActivityLog::create([
@@ -138,6 +149,8 @@ class PesertaController extends Controller
         'waktu_absen' => null,
         'status_pulang' => null,
         'waktu_pulang' => null,
+        'is_susulan' => false,
+        'tanggal_absen_aktual' => null,
     ]);
 
     ActivityLog::create([
