@@ -88,7 +88,7 @@ class PesertaController extends Controller
 
         $tanggalJadwal = $peserta->tanggal_ujian;
         $tanggalAktual = $request->tanggal_absen_aktual;
-        $tanggalServer = now()->format('Y-m-d');
+        $tanggalServer = now()->timezone('Asia/Jakarta')->format('Y-m-d');
 
         $isSusulan = $request->status === 'hadir' && $tanggalAktual !== $tanggalServer;
 

@@ -126,7 +126,7 @@
     const tanggalInput = document.getElementById('kioskTanggal');
     const tahapInput = document.getElementById('tahapUjian');
 
-    const SERVER_DATE = "{{ now()->format('Y-m-d') }}";
+    const SERVER_DATE = "{{ now()->timezone('Asia/Jakarta')->format('Y-m-d') }}";
 
     searchInput.focus();
 
