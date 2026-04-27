@@ -5,6 +5,9 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BeritaAcaraController;
+use App\Http\Controllers\TahapUjianController;
+use App\Http\Controllers\JadwalUjianController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -40,6 +43,12 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
 
     Route::post('/berita-acara/download', [BeritaAcaraController::class, 'download'])
         ->name('berita-acara.download');
+    Route::get('/jadwal-by-tahap', function (Request $request) {
+        return \App\Models\JadwalUjian::where('tahap_ujian_id', $request->tahap_ujian_id)
+            ->where('is_active', true)
+            ->orderBy('tanggal')
+            ->get();
+    });
 
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/peserta', [PesertaController::class, 'index'])->name('peserta.index');
@@ -53,6 +62,9 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
 
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+        Route::resource('/tahap-ujians', TahapUjianController::class)->except(['show']);
+        Route::resource('/jadwal-ujians', JadwalUjianController::class)->except(['show']);
+        
     });
 });
 

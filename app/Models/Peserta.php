@@ -21,4 +21,9 @@ class Peserta extends Model
         'is_susulan',
         'tanggal_absen_aktual',
     ];
+
+    public function absensis()
+    {
+        return $this->hasMany(AbsensiPeserta::class);
+    }
 }

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>{{ $title ?? 'SEKOLAH TINGGI ILMU PELAYARAN' }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet">
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
             background: #f4f6f9;
@@ -127,6 +127,16 @@
                 <a href="{{ route('dashboard.index') }}"
                     class="btn nav-btn {{ request()->routeIs('dashboard.*') ? 'nav-btn-active' : 'nav-btn-outline' }}">
                     Dashboard
+                </a>
+
+                <a href="{{ route('tahap-ujians.index') }}"
+                class="btn nav-btn {{ request()->routeIs('tahap-ujians.*') ? 'nav-btn-active' : 'nav-btn-outline' }}">
+                    Tahap Ujian
+                </a>
+
+                <a href="{{ route('jadwal-ujians.index') }}"
+                class="btn nav-btn {{ request()->routeIs('jadwal-ujians.*') ? 'nav-btn-active' : 'nav-btn-outline' }}">
+                    Jadwal Ujian
                 </a>
 
                 <a href="{{ route('peserta.index') }}"

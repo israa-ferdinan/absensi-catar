@@ -28,6 +28,39 @@
         </div>
     </div>
 
+    {{-- TAHAP --}}
+    <div class="card page-card mb-3">
+        <div class="card-body">
+            <form method="GET" action="{{ route('peserta.index') }}" class="row g-2">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Tahap Ujian</label>
+                    <select name="tahap_ujian_id" class="form-select" onchange="this.form.submit()">
+                        @foreach($tahapUjians as $tahap)
+                            <option value="{{ $tahap->id }}" {{ $tahapUjianId == $tahap->id ? 'selected' : '' }}>
+                                {{ $tahap->nama }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-md-5">
+                    <label class="form-label fw-bold">Jadwal Ujian</label>
+                    <select name="jadwal_ujian_id" class="form-select">
+                        @foreach($jadwals as $jadwal)
+                            <option value="{{ $jadwal->id }}" {{ $jadwalUjianId == $jadwal->id ? 'selected' : '' }}>
+                                {{ $jadwal->tanggal }}{{ $jadwal->kelompok ? ' - Kelompok '.$jadwal->kelompok : ' - Semua Kelompok' }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-primary w-100">Tampilkan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     {{-- SEARCH --}}
     <div class="card page-card mb-3">
         <div class="card-body">
@@ -56,6 +89,9 @@
                 </thead>
                 <tbody>
                     @forelse ($pesertas as $peserta)
+                    @php
+                        $absensi = $peserta->absensis->first();
+                    @endphp
                         <tr>
                             <td>{{ $loop->iteration + ($pesertas->currentPage() - 1) * $pesertas->perPage() }}</td>
                             <td>{{ $peserta->kode_pendaftar }}</td>
@@ -63,10 +99,10 @@
                             <td>{{ $peserta->jenis_kelamin }}</td>
                             <td>{{ $peserta->jurusan }}</td>
                             <td>{{ $peserta->kelompok }}</td>
-                            <td>{{ $peserta->tanggal_ujian }}</td>
+                            <td>{{ $jadwalAktif->tanggal ?? '-' }}</td>
                             {{-- AKSI --}}
                             <td id="aksi-{{ $peserta->id }}">
-                                @if(!$peserta->status_absen)
+                                @if(!($absensi->status_absen ?? null))
                                     <button class="btn btn-success btn-sm btn-absen"
                                             data-id="{{ $peserta->id }}"
                                             data-status="hadir">
@@ -87,9 +123,9 @@
                             </td>
                             {{-- STATUS --}}
                             <td id="status-{{ $peserta->id }}">
-                                @if ($peserta->status_absen === 'hadir')
+                                @if (($absensi->status_absen ?? null) === 'hadir')
                                     <span class="badge bg-success">Hadir</span>
-                                @elseif ($peserta->status_absen === 'tidak_hadir')
+                                @elseif (($absensi->status_absen ?? null) === 'tidak_hadir')
                                     <span class="badge bg-danger">Tidak Hadir</span>
                                 @else
                                     <span class="badge bg-secondary">Belum Absen</span>
@@ -121,7 +157,11 @@ document.getElementById('searchInput').addEventListener('keyup', function () {
     const keyword = this.value;
 
     searchTimer = setTimeout(() => {
-        fetch(`/peserta?search=${encodeURIComponent(keyword)}`, {
+        const tanggal = document.querySelector('[name="tanggal_ujian"]').value;
+        const tahap = document.querySelector('[name="tahap_ujian_id"]').value;
+        const jadwal = document.querySelector('[name="jadwal_ujian_id"]').value;
+
+        fetch(`/peserta?search=${encodeURIComponent(keyword)}&tahap_ujian_id=${encodeURIComponent(tahap)}&jadwal_ujian_id=${encodeURIComponent(jadwal)}`, {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
             }
@@ -155,7 +195,11 @@ document.addEventListener('click', function (e) {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
             'X-Requested-With': 'XMLHttpRequest'
         },
-        body: JSON.stringify({ status: status })
+        body: JSON.stringify({
+        status: status,
+        tanggal_absen_aktual: '{{ $jadwalAktif->tanggal ?? now()->format("Y-m-d") }}',
+        tahap_ujian_id: document.querySelector('[name="tahap_ujian_id"]').value
+    })
     })
     .then(response => response.json())
     .then(data => {
@@ -204,7 +248,11 @@ document.addEventListener('click', function (e) {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 'X-Requested-With': 'XMLHttpRequest'
-            }
+            },
+            body: JSON.stringify({
+            tahap_ujian_id: document.querySelector('[name="tahap_ujian_id"]').value,
+            tanggal_jadwal: '{{ $jadwalAktif->tanggal ?? now()->format("Y-m-d") }}'
+            })
         })
         .then(res => res.json())
         .then(data => {

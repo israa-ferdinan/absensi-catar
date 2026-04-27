@@ -3,24 +3,54 @@
 namespace App\Http\Controllers;
 
 use App\Models\Peserta;
+use App\Models\TahapUjian;
+use App\Models\JadwalUjian;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use PhpOffice\PhpWord\TemplateProcessor;
 
 class BeritaAcaraController extends Controller
 {
-    public function form()
+    public function form(Request $request)
     {
-        return view('berita_acara.form');
+        $tahapUjians = TahapUjian::where('is_active', true)
+            ->orderBy('nama')
+            ->get();
+
+        $tahapUjianId = $request->tahap_ujian_id ?? optional($tahapUjians->first())->id;
+
+        $jadwals = JadwalUjian::where('tahap_ujian_id', $tahapUjianId)
+            ->where('is_active', true)
+            ->orderBy('tanggal')
+            ->get();
+
+        $jadwalUjianId = $request->jadwal_ujian_id;
+
+        // PENTING: kalau jadwal yang dikirim bukan milik tahap yang dipilih,
+        // paksa ambil jadwal pertama dari tahap tersebut
+        if (!$jadwalUjianId || !$jadwals->contains('id', (int) $jadwalUjianId)) {
+            $jadwalUjianId = optional($jadwals->first())->id;
+        }
+
+        return view('berita_acara.form', compact(
+            'tahapUjians',
+            'tahapUjianId',
+            'jadwals',
+            'jadwalUjianId'
+        ));
     }
 
     public function download(Request $request)
     {
         $request->validate([
-            'tanggal' => 'required|date',
+            'tahap_ujian_id' => 'required|exists:tahap_ujians,id',
+            'jadwal_ujian_id' => 'required|exists:jadwal_ujians,id',
         ]);
 
-        $tanggal = $request->tanggal;
+        $tahap = \App\Models\TahapUjian::findOrFail($request->tahap_ujian_id);
+        $jadwal = \App\Models\JadwalUjian::findOrFail($request->jadwal_ujian_id);
+
+        $tanggal = $jadwal->tanggal;
 
         Carbon::setLocale('id');
 
@@ -47,6 +77,8 @@ class BeritaAcaraController extends Controller
         $template->setValue('tanggal_lampiran_hadir', $tanggalLampiran);
         $template->setValue('tanggal_lampiran_tidak_hadir', $tanggalLampiran);
         $template->setValue('tanggal_lampiran_susulan', $tanggalLampiran);
+        $template->setValue('nama_tahap', $tahap->nama);
+        $template->setValue('nama_tahap_upper', strtoupper($tahap->nama));
 
         $totalPeserta = Peserta::where('tanggal_ujian', $tanggal)->count();
 
