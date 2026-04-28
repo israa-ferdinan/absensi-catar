@@ -52,15 +52,12 @@ class BeritaAcaraController extends Controller
         $tanggal = $jadwal->tanggal;
 
         Carbon::setLocale('id');
-
         $tanggalObj = Carbon::parse($tanggal);
 
         $hari = $tanggalObj->translatedFormat('l');
         $bulan = $tanggalObj->translatedFormat('F');
-
         $tanggalTerbilang = trim(preg_replace('/\s+/', ' ', terbilang((int) $tanggalObj->format('d'))));
         $tahunTerbilang = trim(preg_replace('/\s+/', ' ', terbilang((int) $tanggalObj->format('Y'))));
-
         $tanggalFormatted = $tanggalObj->translatedFormat('d F Y');
         $tanggalLampiran = strtoupper($tanggalObj->translatedFormat('l, d F Y'));
 
@@ -70,13 +67,11 @@ class BeritaAcaraController extends Controller
 
         $template->setValue('nama_tahap', $tahap->nama);
         $template->setValue('nama_tahap_upper', strtoupper($tahap->nama));
-
         $template->setValue('hari', $hari);
         $template->setValue('tanggal_terbilang', $tanggalTerbilang);
         $template->setValue('bulan', $bulan);
         $template->setValue('tahun_terbilang', $tahunTerbilang);
         $template->setValue('tanggal_cetak', $tanggalFormatted);
-
         $template->setValue('tanggal_lampiran_hadir', $tanggalLampiran);
         $template->setValue('tanggal_lampiran_tidak_hadir', $tanggalLampiran);
         $template->setValue('tanggal_lampiran_susulan', $tanggalLampiran);
@@ -88,7 +83,6 @@ class BeritaAcaraController extends Controller
         }
 
         $pesertaIds = $pesertaQuery->pluck('id');
-
         $totalPeserta = $pesertaIds->count();
 
         $absensiQuery = AbsensiPeserta::whereHas('peserta')
@@ -105,7 +99,11 @@ class BeritaAcaraController extends Controller
             ->where('status_absen', 'tidak_hadir')
             ->count();
 
-        $susulan = (clone $absensiQuery)
+        // Susulan sengaja TIDAK dibatasi pesertaIds,
+        // karena peserta susulan bisa berasal dari kelompok/jadwal lain.
+        $susulan = AbsensiPeserta::whereHas('peserta')
+            ->where('tahap_ujian_id', $tahap->id)
+            ->where('tanggal_jadwal', $tanggal)
             ->where('status_absen', 'hadir')
             ->where('is_susulan', true)
             ->count();
@@ -189,7 +187,6 @@ class BeritaAcaraController extends Controller
         // ======================
         $dataSusulan = AbsensiPeserta::with('peserta')
             ->whereHas('peserta')
-            ->whereIn('peserta_id', $pesertaIds)
             ->where('tahap_ujian_id', $tahap->id)
             ->where('tanggal_jadwal', $tanggal)
             ->where('status_absen', 'hadir')
