@@ -86,7 +86,7 @@ class PesertaController extends Controller
             'tanggal_absen_aktual' => 'required|date',
         ]);
 
-        $tanggalJadwal = $peserta->tanggal_ujian;
+        $tanggalJadwal = $request->tanggal_absen_aktual;
         $tanggalAktual = $request->tanggal_absen_aktual;
         $tanggalServer = now()->timezone('Asia/Jakarta')->format('Y-m-d');
 
