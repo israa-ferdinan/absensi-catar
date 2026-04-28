@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Peserta;
 use App\Models\TahapUjian;
 use App\Models\JadwalUjian;
+use App\Models\AbsensiPeserta;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use PhpOffice\PhpWord\TemplateProcessor;
@@ -80,18 +81,30 @@ class BeritaAcaraController extends Controller
         $template->setValue('nama_tahap', $tahap->nama);
         $template->setValue('nama_tahap_upper', strtoupper($tahap->nama));
 
-        $totalPeserta = Peserta::where('tanggal_ujian', $tanggal)->count();
+        $pesertaQuery = Peserta::query();
 
-        $hadir = Peserta::where('tanggal_ujian', $tanggal)
+        if ($jadwal->kelompok) {
+            $pesertaQuery->where('kelompok', $jadwal->kelompok);
+        }
+
+        $pesertaIds = $pesertaQuery->pluck('id');
+
+        $totalPeserta = $pesertaIds->count();
+
+        $absensiQuery = AbsensiPeserta::whereIn('peserta_id', $pesertaIds)
+            ->where('tahap_ujian_id', $tahap->id)
+            ->where('tanggal_jadwal', $tanggal);
+
+        $hadir = (clone $absensiQuery)
             ->where('status_absen', 'hadir')
             ->where('is_susulan', false)
             ->count();
 
-        $tidakHadir = Peserta::where('tanggal_ujian', $tanggal)
+        $tidakHadir = (clone $absensiQuery)
             ->where('status_absen', 'tidak_hadir')
             ->count();
 
-        $susulan = Peserta::where('tanggal_absen_aktual', $tanggal)
+        $susulan = (clone $absensiQuery)
             ->where('status_absen', 'hadir')
             ->where('is_susulan', true)
             ->count();
@@ -108,11 +121,14 @@ class BeritaAcaraController extends Controller
         $template->setValue('laporan_panitia', $request->laporan_panitia ?: 'NIHIL');
 
         // Lampiran Hadir
-        $dataHadir = Peserta::where('tanggal_ujian', $tanggal)
+        $dataHadir = AbsensiPeserta::with('peserta')
+            ->whereIn('peserta_id', $pesertaIds)
+            ->where('tahap_ujian_id', $tahap->id)
+            ->where('tanggal_jadwal', $tanggal)
             ->where('status_absen', 'hadir')
             ->where('is_susulan', false)
-            ->orderBy('kode_pendaftar')
-            ->get();
+            ->get()
+            ->sortBy(fn($a) => $a->peserta->kode_pendaftar);
 
         if ($dataHadir->count() > 0) {
             $template->cloneRow('no', $dataHadir->count());
@@ -120,8 +136,8 @@ class BeritaAcaraController extends Controller
             foreach ($dataHadir as $i => $p) {
                 $row = $i + 1;
                 $template->setValue("no#{$row}", $row . '.');
-                $template->setValue("kode_peserta#{$row}", $p->kode_pendaftar);
-                $template->setValue("nama_peserta#{$row}", $p->nama);
+                $template->setValue("kode_peserta#{$row}", $p->peserta->kode_pendaftar);
+                $template->setValue("nama_peserta#{$row}", $p->peserta->nama);
                 $template->setValue("keterangan#{$row}", 'HADIR');
             }
         } else {
@@ -143,8 +159,8 @@ class BeritaAcaraController extends Controller
             foreach ($dataTidakHadir as $i => $p) {
                 $row = $i + 1;
                 $template->setValue("no_tidak#{$row}", $row);
-                $template->setValue("kode_tidak#{$row}", $p->kode_pendaftar);
-                $template->setValue("nama_tidak#{$row}", $p->nama);
+                $template->setValue("kode_tidak#{$row}", $p->peserta->kode_pendaftar);
+                $template->setValue("nama_tidak#{$row}", $p->peserta->nama);
                 $template->setValue("ket_tidak#{$row}", 'TIDAK HADIR');
             }
         } else {
@@ -167,8 +183,8 @@ class BeritaAcaraController extends Controller
             foreach ($dataSusulan as $i => $p) {
                 $row = $i + 1;
                 $template->setValue("no_susulan#{$row}", $row . '.');
-                $template->setValue("kode_susulan#{$row}", $p->kode_pendaftar);
-                $template->setValue("nama_susulan#{$row}", $p->nama);
+                $template->setValue("kode_susulan#{$row}", $p->peserta->kode_pendaftar);
+                $template->setValue("nama_susulan#{$row}", $p->peserta->nama);
                 $template->setValue("ket_susulan#{$row}", 'Hadir Susulan');
             }
         } else {
