@@ -27,8 +27,6 @@ class BeritaAcaraController extends Controller
 
         $jadwalUjianId = $request->jadwal_ujian_id;
 
-        // PENTING: kalau jadwal yang dikirim bukan milik tahap yang dipilih,
-        // paksa ambil jadwal pertama dari tahap tersebut
         if (!$jadwalUjianId || !$jadwals->contains('id', (int) $jadwalUjianId)) {
             $jadwalUjianId = optional($jadwals->first())->id;
         }
@@ -48,8 +46,8 @@ class BeritaAcaraController extends Controller
             'jadwal_ujian_id' => 'required|exists:jadwal_ujians,id',
         ]);
 
-        $tahap = \App\Models\TahapUjian::findOrFail($request->tahap_ujian_id);
-        $jadwal = \App\Models\JadwalUjian::findOrFail($request->jadwal_ujian_id);
+        $tahap = TahapUjian::findOrFail($request->tahap_ujian_id);
+        $jadwal = JadwalUjian::findOrFail($request->jadwal_ujian_id);
 
         $tanggal = $jadwal->tanggal;
 
@@ -70,16 +68,18 @@ class BeritaAcaraController extends Controller
             storage_path('app/templates/berita_acara.docx')
         );
 
+        $template->setValue('nama_tahap', $tahap->nama);
+        $template->setValue('nama_tahap_upper', strtoupper($tahap->nama));
+
         $template->setValue('hari', $hari);
         $template->setValue('tanggal_terbilang', $tanggalTerbilang);
         $template->setValue('bulan', $bulan);
         $template->setValue('tahun_terbilang', $tahunTerbilang);
         $template->setValue('tanggal_cetak', $tanggalFormatted);
+
         $template->setValue('tanggal_lampiran_hadir', $tanggalLampiran);
         $template->setValue('tanggal_lampiran_tidak_hadir', $tanggalLampiran);
         $template->setValue('tanggal_lampiran_susulan', $tanggalLampiran);
-        $template->setValue('nama_tahap', $tahap->nama);
-        $template->setValue('nama_tahap_upper', strtoupper($tahap->nama));
 
         $pesertaQuery = Peserta::query();
 
@@ -91,7 +91,8 @@ class BeritaAcaraController extends Controller
 
         $totalPeserta = $pesertaIds->count();
 
-        $absensiQuery = AbsensiPeserta::whereIn('peserta_id', $pesertaIds)
+        $absensiQuery = AbsensiPeserta::whereHas('peserta')
+            ->whereIn('peserta_id', $pesertaIds)
             ->where('tahap_ujian_id', $tahap->id)
             ->where('tanggal_jadwal', $tanggal);
 
@@ -120,24 +121,29 @@ class BeritaAcaraController extends Controller
         $template->setValue('laporan_penyelenggara', $request->laporan_penyelenggara ?: 'NIHIL');
         $template->setValue('laporan_panitia', $request->laporan_panitia ?: 'NIHIL');
 
+        // ======================
         // Lampiran Hadir
+        // ======================
         $dataHadir = AbsensiPeserta::with('peserta')
+            ->whereHas('peserta')
             ->whereIn('peserta_id', $pesertaIds)
             ->where('tahap_ujian_id', $tahap->id)
             ->where('tanggal_jadwal', $tanggal)
             ->where('status_absen', 'hadir')
             ->where('is_susulan', false)
             ->get()
-            ->sortBy(fn($a) => $a->peserta->kode_pendaftar);
+            ->sortBy(fn ($a) => $a->peserta->kode_pendaftar)
+            ->values();
 
         if ($dataHadir->count() > 0) {
             $template->cloneRow('no', $dataHadir->count());
 
-            foreach ($dataHadir as $i => $p) {
+            foreach ($dataHadir as $i => $absensi) {
                 $row = $i + 1;
+
                 $template->setValue("no#{$row}", $row . '.');
-                $template->setValue("kode_peserta#{$row}", $p->peserta->kode_pendaftar);
-                $template->setValue("nama_peserta#{$row}", $p->peserta->nama);
+                $template->setValue("kode_peserta#{$row}", $absensi->peserta->kode_pendaftar);
+                $template->setValue("nama_peserta#{$row}", $absensi->peserta->nama);
                 $template->setValue("keterangan#{$row}", 'HADIR');
             }
         } else {
@@ -147,20 +153,28 @@ class BeritaAcaraController extends Controller
             $template->setValue('keterangan', '-');
         }
 
+        // ======================
         // Lampiran Tidak Hadir
-        $dataTidakHadir = Peserta::where('tanggal_ujian', $tanggal)
+        // ======================
+        $dataTidakHadir = AbsensiPeserta::with('peserta')
+            ->whereHas('peserta')
+            ->whereIn('peserta_id', $pesertaIds)
+            ->where('tahap_ujian_id', $tahap->id)
+            ->where('tanggal_jadwal', $tanggal)
             ->where('status_absen', 'tidak_hadir')
-            ->orderBy('kode_pendaftar')
-            ->get();
+            ->get()
+            ->sortBy(fn ($a) => $a->peserta->kode_pendaftar)
+            ->values();
 
         if ($dataTidakHadir->count() > 0) {
             $template->cloneRow('no_tidak', $dataTidakHadir->count());
 
-            foreach ($dataTidakHadir as $i => $p) {
+            foreach ($dataTidakHadir as $i => $absensi) {
                 $row = $i + 1;
-                $template->setValue("no_tidak#{$row}", $row);
-                $template->setValue("kode_tidak#{$row}", $p->peserta->kode_pendaftar);
-                $template->setValue("nama_tidak#{$row}", $p->peserta->nama);
+
+                $template->setValue("no_tidak#{$row}", $row . '.');
+                $template->setValue("kode_tidak#{$row}", $absensi->peserta->kode_pendaftar);
+                $template->setValue("nama_tidak#{$row}", $absensi->peserta->nama);
                 $template->setValue("ket_tidak#{$row}", 'TIDAK HADIR');
             }
         } else {
@@ -170,21 +184,29 @@ class BeritaAcaraController extends Controller
             $template->setValue('ket_tidak', '-');
         }
 
+        // ======================
         // Lampiran Susulan
-        $dataSusulan = Peserta::where('tanggal_absen_aktual', $tanggal)
+        // ======================
+        $dataSusulan = AbsensiPeserta::with('peserta')
+            ->whereHas('peserta')
+            ->whereIn('peserta_id', $pesertaIds)
+            ->where('tahap_ujian_id', $tahap->id)
+            ->where('tanggal_jadwal', $tanggal)
             ->where('status_absen', 'hadir')
             ->where('is_susulan', true)
-            ->orderBy('kode_pendaftar')
-            ->get();
+            ->get()
+            ->sortBy(fn ($a) => $a->peserta->kode_pendaftar)
+            ->values();
 
         if ($dataSusulan->count() > 0) {
             $template->cloneRow('no_susulan', $dataSusulan->count());
 
-            foreach ($dataSusulan as $i => $p) {
+            foreach ($dataSusulan as $i => $absensi) {
                 $row = $i + 1;
+
                 $template->setValue("no_susulan#{$row}", $row . '.');
-                $template->setValue("kode_susulan#{$row}", $p->peserta->kode_pendaftar);
-                $template->setValue("nama_susulan#{$row}", $p->peserta->nama);
+                $template->setValue("kode_susulan#{$row}", $absensi->peserta->kode_pendaftar);
+                $template->setValue("nama_susulan#{$row}", $absensi->peserta->nama);
                 $template->setValue("ket_susulan#{$row}", 'Hadir Susulan');
             }
         } else {
@@ -194,7 +216,7 @@ class BeritaAcaraController extends Controller
             $template->setValue('ket_susulan', '-');
         }
 
-        $filename = 'berita_acara_' . $tanggal . '.docx';
+        $filename = 'berita_acara_' . str_replace(' ', '_', strtolower($tahap->nama)) . '_' . $tanggal . '.docx';
         $path = storage_path('app/public/' . $filename);
 
         $template->saveAs($path);
